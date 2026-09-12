@@ -1,12 +1,78 @@
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#070b14">
-<meta name="description" content="Free learning, practice, problem solving and study tools for Indian students.">
-<title>StudyCore — Learn. Practice. Understand.</title>
-<link rel="stylesheet" href="style.css">
-</head><body>
-<header class="top"><a href="#" onclick="home();return false"><b class="mark">S</b><b>STUDYCORE</b></a><button onclick="alert('Accounts are planned for Phase 2.')">ACCOUNT</button></header>
-<main id="app"></main><footer>StudyCore · Free learning for students</footer>
-<script src="data/content.js"></script><script src="app.js"></script>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>StudyCore — Free Learning for Students</title>
+
+  <meta
+    name="description"
+    content="StudyCore is a free learning platform for Indian students."
+  >
+
+  <meta name="theme-color" content="#070a12">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="topbar">
+
+    <a href="#" class="brand" onclick="goHome(); return false;">
+
+      <div class="brand-mark">S</div>
+
+      <div class="brand-text">
+        <strong>STUDYCORE</strong>
+        <span>Free learning for students</span>
+      </div>
+
+    </a>
+
+    <button
+      class="account-button"
+      onclick="showAccount()"
+    >
+      ACCOUNT
+    </button>
+
+  </header>
+
+
+  <main id="app">
+
+    <section class="loading-screen">
+
+      <div class="loading-logo">S</div>
+
+      <h1>StudyCore</h1>
+
+      <p>Loading your learning space...</p>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <span>StudyCore</span>
+
+    <span>Free learning for students</span>
+
+  </footer>
+
+
+  <div id="toast"></div>
+
+
+  <!-- Content database -->
+  <script src="data/content.js"></script>
+
+  <!-- Main application -->
+  <script src="app.js"></script>
+
+</body>
+</html>
