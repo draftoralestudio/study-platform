@@ -1,11 +1,17 @@
 /* =========================================================
-   STUDYCORE — MAIN APPLICATION
+   STUDYCORE
+   Main Application
    ========================================================= */
 
 const app = document.getElementById("app");
 
+
+/* =========================================================
+   APPLICATION STATE
+   ========================================================= */
+
 const state = {
-  step: 0,
+  step: "class",
 
   className: null,
   board: null,
@@ -16,131 +22,76 @@ const state = {
   topic: null,
 
   tab: "learn",
+
   quizScore: 0,
-  quizAnswered: false
+
+  loadedData: null
 };
 
 
 /* =========================================================
-   BASIC HELPERS
+   DATA FILE MAP
+   =========================================================
+
+   We will add more files here later.
+
+   The important part:
+   StudyCore does NOT need one giant content.js anymore.
+
+   Each subject/book can have its own file.
+*/
+
+const DATA_FILES = {
+
+  NCERT: {
+
+    "10": {
+
+      English: "data/ncert/class10/english/footprints.js"
+
+    }
+
+  },
+
+  WBBSE: {
+
+    "10": {
+
+    }
+
+  },
+
+  WBCHSE: {
+
+    "11": {
+
+    },
+
+    "12": {
+
+    }
+
+  }
+
+};
+
+
+/* =========================================================
+   ESCAPE HTML
    ========================================================= */
 
 function escapeHTML(value) {
-  return String(value ?? "")
+
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  return String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-}
-
-
-function getData() {
-  if (
-    typeof window.STUDY_DATA !== "object" ||
-    window.STUDY_DATA === null
-  ) {
-    return {};
-  }
-
-  return window.STUDY_DATA;
-}
-
-
-function getKeys(object) {
-  if (!object || typeof object !== "object") {
-    return [];
-  }
-
-  return Object.keys(object);
-}
-
-
-function getCurrentObject() {
-  const data = getData();
-
-  let current = data;
-
-  if (state.className) {
-    current = current[state.className];
-  }
-
-  if (state.board) {
-    current = current[state.board];
-  }
-
-  if (state.stream) {
-    current = current[state.stream];
-  }
-
-  if (state.subject) {
-    current = current[state.subject];
-  }
-
-  if (state.book) {
-    current = current[state.book];
-  }
-
-  if (state.chapter) {
-    current = current[state.chapter];
-  }
-
-  return current || {};
-}
-
-
-/* =========================================================
-   SAFE CLICK VALUE
-   ========================================================= */
-
-function encodeValue(value) {
-  return encodeURIComponent(String(value));
-}
-
-
-function decodeValue(value) {
-  return decodeURIComponent(value);
-}
-
-
-/* =========================================================
-   HOME
-   ========================================================= */
-
-function goHome() {
-
-  state.step = 0;
-
-  state.className = null;
-  state.board = null;
-  state.stream = null;
-  state.subject = null;
-  state.book = null;
-  state.chapter = null;
-  state.topic = null;
-
-  state.tab = "learn";
-  state.quizScore = 0;
-  state.quizAnswered = false;
-
-  render();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-
-/* =========================================================
-   ACCOUNT
-   ========================================================= */
-
-function showAccount() {
-
-  showToast(
-    "Student accounts and AI access are coming soon."
-  );
 }
 
 
@@ -155,116 +106,49 @@ function showToast(message) {
   if (!toast) return;
 
   toast.textContent = message;
+
   toast.classList.add("show");
 
-  clearTimeout(window.studyCoreToastTimer);
-
-  window.studyCoreToastTimer = setTimeout(() => {
+  setTimeout(() => {
     toast.classList.remove("show");
   }, 2500);
 }
 
 
 /* =========================================================
-   SELECTION ENGINE
+   HOME
    ========================================================= */
 
-function selectLevel(type, encodedValue) {
+function goHome() {
 
-  const value = decodeValue(encodedValue);
+  state.step = "class";
 
-  if (type === "class") {
+  state.className = null;
+  state.board = null;
+  state.stream = null;
+  state.subject = null;
+  state.book = null;
+  state.chapter = null;
+  state.topic = null;
 
-    state.className = value;
+  state.tab = "learn";
 
-    state.board = null;
-    state.stream = null;
-    state.subject = null;
-    state.book = null;
-    state.chapter = null;
-    state.topic = null;
+  state.quizScore = 0;
 
-    state.step = 1;
-  }
-
-
-  else if (type === "board") {
-
-    state.board = value;
-
-    state.stream = null;
-    state.subject = null;
-    state.book = null;
-    state.chapter = null;
-    state.topic = null;
-
-    state.step = 2;
-  }
-
-
-  else if (type === "stream") {
-
-    state.stream = value;
-
-    state.subject = null;
-    state.book = null;
-    state.chapter = null;
-    state.topic = null;
-
-    state.step = 3;
-  }
-
-
-  else if (type === "subject") {
-
-    state.subject = value;
-
-    state.book = null;
-    state.chapter = null;
-    state.topic = null;
-
-    state.step = 4;
-  }
-
-
-  else if (type === "book") {
-
-    state.book = value;
-
-    state.chapter = null;
-    state.topic = null;
-
-    state.step = 5;
-  }
-
-
-  else if (type === "chapter") {
-
-    state.chapter = value;
-
-    state.topic = null;
-
-    state.step = 6;
-  }
-
-
-  else if (type === "topic") {
-
-    state.topic = value;
-
-    state.step = 7;
-
-    state.tab = "learn";
-    state.quizScore = 0;
-    state.quizAnswered = false;
-  }
+  state.loadedData = null;
 
   render();
+}
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+
+/* =========================================================
+   ACCOUNT
+   ========================================================= */
+
+function showAccount() {
+
+  showToast("Account system is coming next.");
+
 }
 
 
@@ -274,141 +158,388 @@ function selectLevel(type, encodedValue) {
 
 function goBack() {
 
-  if (state.step <= 0) {
-    goHome();
-    return;
-  }
+  if (state.step === "topic") {
 
-  if (state.step === 1) {
-
-    state.className = null;
-    state.step = 0;
-  }
-
-  else if (state.step === 2) {
-
-    state.board = null;
-    state.step = 1;
-  }
-
-  else if (state.step === 3) {
-
-    state.stream = null;
-    state.step = 2;
-  }
-
-  else if (state.step === 4) {
-
-    state.subject = null;
-    state.step = 3;
-  }
-
-  else if (state.step === 5) {
-
-    state.book = null;
-    state.step = 4;
-  }
-
-  else if (state.step === 6) {
-
-    state.chapter = null;
-    state.step = 5;
-  }
-
-  else if (state.step === 7) {
-
+    state.step = "chapter";
     state.topic = null;
-    state.step = 6;
+    state.tab = "learn";
+
   }
 
-  state.tab = "learn";
+  else if (state.step === "chapter") {
+
+    state.step = "book";
+    state.chapter = null;
+
+  }
+
+  else if (state.step === "book") {
+
+    state.step = "subject";
+    state.book = null;
+
+  }
+
+  else if (state.step === "subject") {
+
+    state.step = "stream";
+    state.subject = null;
+    state.loadedData = null;
+
+  }
+
+  else if (state.step === "stream") {
+
+    state.step = "board";
+    state.stream = null;
+
+  }
+
+  else if (state.step === "board") {
+
+    state.step = "class";
+    state.board = null;
+
+  }
 
   render();
+}
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
+
+/* =========================================================
+   SELECT LEVEL
+   ========================================================= */
+
+function selectLevel(type, value) {
+
+  if (type === "class") {
+
+    state.className = value;
+    state.step = "board";
+
+  }
+
+  else if (type === "board") {
+
+    state.board = value;
+
+    /*
+      Class 10 currently doesn't need a stream selection
+      for the first version.
+
+      We will add stream handling when Commerce/Arts/Science
+      datasets are connected.
+    */
+
+    if (state.className === "10") {
+
+      state.stream = "General";
+      state.step = "stream";
+
+    } else {
+
+      state.step = "stream";
+
+    }
+
+  }
+
+  else if (type === "stream") {
+
+    state.stream = value;
+    state.step = "subject";
+
+  }
+
+  else if (type === "subject") {
+
+    state.subject = value;
+
+    loadSubjectData()
+      .then(() => {
+
+        state.step = "book";
+
+        render();
+
+      })
+      .catch(() => {
+
+        showToast("This subject is not available yet.");
+
+      });
+
+    return;
+
+  }
+
+  else if (type === "book") {
+
+    state.book = value;
+    state.step = "chapter";
+
+  }
+
+  else if (type === "chapter") {
+
+    state.chapter = value;
+    state.step = "topic";
+
+  }
+
+  else if (type === "topic") {
+
+    state.topic = value;
+    state.tab = "learn";
+
+    state.quizScore = 0;
+
+    state.step = "topic";
+
+  }
+
+  render();
+}
+
+
+/* =========================================================
+   LOAD SUBJECT DATA
+   ========================================================= */
+
+function loadSubjectData() {
+
+  return new Promise((resolve, reject) => {
+
+    /*
+      Already loaded?
+    */
+
+    if (state.loadedData) {
+
+      resolve(state.loadedData);
+
+      return;
+
+    }
+
+
+    const board = state.board;
+    const className = state.className;
+    const subject = state.subject;
+
+
+    if (
+      !DATA_FILES[board] ||
+      !DATA_FILES[board][className] ||
+      !DATA_FILES[board][className][subject]
+    ) {
+
+      reject(new Error("Data file not found"));
+
+      return;
+
+    }
+
+
+    const file = DATA_FILES[board][className][subject];
+
+
+    /*
+      Remove old StudyCore data object if one exists.
+    */
+
+    window.STUDY_DATA = null;
+
+
+    /*
+      Create script dynamically.
+    */
+
+    const script = document.createElement("script");
+
+    script.src = file + "?v=" + Date.now();
+
+    script.onload = () => {
+
+      if (!window.STUDY_DATA) {
+
+        reject(new Error("Study data missing"));
+
+        return;
+
+      }
+
+      state.loadedData = window.STUDY_DATA;
+
+      resolve(window.STUDY_DATA);
+
+    };
+
+
+    script.onerror = () => {
+
+      reject(new Error("Could not load " + file));
+
+    };
+
+
+    document.body.appendChild(script);
+
   });
+
 }
 
 
 /* =========================================================
-   BREADCRUMB
+   GET CURRENT DATA
    ========================================================= */
 
-function createPath() {
+function getCurrentData() {
 
-  const parts = [];
+  return state.loadedData || window.STUDY_DATA || null;
 
-  if (state.className) parts.push(state.className);
-  if (state.board) parts.push(state.board);
-  if (state.stream) parts.push(state.stream);
-  if (state.subject) parts.push(state.subject);
-  if (state.book) parts.push(state.book);
-  if (state.chapter) parts.push(state.chapter);
-  if (state.topic) parts.push(state.topic);
-
-  return parts
-    .map(item => escapeHTML(item))
-    .join(" / ");
 }
 
 
 /* =========================================================
-   CARD
+   GET CURRENT BOOK
    ========================================================= */
 
-function createOptionCard(title, index, type) {
+function getCurrentBook() {
 
-  return `
-    <button
-      class="option-card"
-      onclick="selectLevel(
-        '${escapeHTML(type)}',
-        '${encodeValue(title)}'
-      )"
-    >
+  const data = getCurrentData();
 
-      <span class="card-number">
-        ${String(index + 1).padStart(2, "0")}
-      </span>
+  if (!data || !data.books) return null;
 
-      <strong>
-        ${escapeHTML(title)}
-      </strong>
+  return data.books[state.book] || null;
 
-      <span class="card-action">
-        Continue →
-      </span>
-
-    </button>
-  `;
 }
 
 
 /* =========================================================
-   PAGE HEADER
+   GET CURRENT CHAPTER
+   ========================================================= */
+
+function getCurrentChapter() {
+
+  const book = getCurrentBook();
+
+  if (!book || !book.chapters) return null;
+
+  return book.chapters[state.chapter] || null;
+
+}
+
+
+/* =========================================================
+   GET CURRENT TOPIC
+   ========================================================= */
+
+function getCurrentTopic() {
+
+  const chapter = getCurrentChapter();
+
+  if (!chapter || !chapter.topics) return null;
+
+  return chapter.topics[state.topic] || null;
+
+}
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render() {
+
+  if (!app) return;
+
+
+  if (state.step === "class") {
+
+    renderClass();
+
+    return;
+
+  }
+
+
+  if (state.step === "board") {
+
+    renderBoard();
+
+    return;
+
+  }
+
+
+  if (state.step === "stream") {
+
+    renderStream();
+
+    return;
+
+  }
+
+
+  if (state.step === "subject") {
+
+    renderSubject();
+
+    return;
+
+  }
+
+
+  if (state.step === "book") {
+
+    renderBook();
+
+    return;
+
+  }
+
+
+  if (state.step === "chapter") {
+
+    renderChapter();
+
+    return;
+
+  }
+
+
+  if (state.step === "topic") {
+
+    renderTopic();
+
+    return;
+
+  }
+
+}
+
+
+/* =========================================================
+   PAGE WRAPPER
    ========================================================= */
 
 function pageHeader(title, subtitle) {
 
   return `
+
     <section class="hero">
 
-      <div class="eyebrow">
-        STUDYCORE • FREE LEARNING
-      </div>
+      <p class="eyebrow">STUDYCORE</p>
 
-      <h1>
-        ${escapeHTML(title)}
-      </h1>
+      <h1>${escapeHTML(title)}</h1>
 
-      <p>
-        ${escapeHTML(subtitle)}
-      </p>
+      <p>${escapeHTML(subtitle)}</p>
 
     </section>
+
   `;
+
 }
 
 
@@ -419,499 +550,965 @@ function pageHeader(title, subtitle) {
 function backButton() {
 
   return `
-    <button
-      class="back-button"
-      onclick="goBack()"
-    >
+
+    <button class="back-button" onclick="goBack()">
+
       ← Back
+
     </button>
+
   `;
+
 }
 
 
 /* =========================================================
-   CHOOSER
+   CARD GRID
    ========================================================= */
 
-function renderChooser(title, subtitle, items, type) {
-
-  if (!items || items.length === 0) {
-
-    return `
-      ${pageHeader(title, subtitle)}
-
-      ${backButton()}
-
-      <section class="empty-state">
-
-        <h2>
-          Coming soon
-        </h2>
-
-        <p>
-          This section is being built.
-        </p>
-
-      </section>
-    `;
-  }
-
+function cards(items, type) {
 
   return `
-    ${pageHeader(title, subtitle)}
 
-    <div class="breadcrumb">
-      ${createPath()}
+    <div class="card-grid">
+
+      ${items.map(item => `
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('${type}', '${String(item).replace(/'/g, "\\'")}')"
+        >
+
+          <span class="choice-title">
+            ${escapeHTML(item)}
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+      `).join("")}
+
     </div>
 
-    ${backButton()}
+  `;
 
-    <section class="options-section">
+}
 
-      <div class="section-label">
-        OPTIONS
-      </div>
 
-      <div class="option-grid">
+/* =========================================================
+   CLASS
+   ========================================================= */
 
-        ${items
-          .map((item, index) =>
-            createOptionCard(item, index, type)
-          )
-          .join("")}
+function renderClass() {
+
+  app.innerHTML = `
+
+    ${pageHeader(
+      "WHAT ARE YOU STUDYING?",
+      "Choose your class to begin."
+    )}
+
+    <section class="content-section">
+
+      <div class="card-grid">
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('class','10')"
+        >
+
+          <span class="choice-title">
+            Class 10
+          </span>
+
+          <span class="choice-description">
+            Secondary school
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('class','11')"
+        >
+
+          <span class="choice-title">
+            Class 11
+          </span>
+
+          <span class="choice-description">
+            Higher secondary
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('class','12')"
+        >
+
+          <span class="choice-title">
+            Class 12
+          </span>
+
+          <span class="choice-description">
+            Higher secondary
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
 
       </div>
 
     </section>
+
   `;
+
 }
 
 
 /* =========================================================
-   DETERMINE AVAILABLE STREAMS
+   BOARD
    ========================================================= */
 
-function getStreams() {
+function renderBoard() {
 
-  const current = getData()[state.className]?.[state.board];
+  app.innerHTML = `
 
-  if (!current) {
-    return [];
-  }
+    ${backButton()}
 
-  return getKeys(current);
+    ${pageHeader(
+      "CHOOSE YOUR CURRICULUM",
+      "Select the curriculum you are studying."
+    )}
+
+    <section class="content-section">
+
+      <div class="card-grid">
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('board','NCERT')"
+        >
+
+          <span class="choice-title">
+            NCERT
+          </span>
+
+          <span class="choice-description">
+            National curriculum resources
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('board','WBBSE')"
+        >
+
+          <span class="choice-title">
+            WBBSE
+          </span>
+
+          <span class="choice-description">
+            West Bengal Board
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('board','WBCHSE')"
+        >
+
+          <span class="choice-title">
+            WBCHSE
+          </span>
+
+          <span class="choice-description">
+            West Bengal Higher Secondary
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+      </div>
+
+    </section>
+
+  `;
+
 }
 
 
 /* =========================================================
-   DETERMINE WHETHER A LEVEL IS A BOOK
+   STREAM
    ========================================================= */
 
-function looksLikeTopicData(object) {
+function renderStream() {
 
-  if (!object || typeof object !== "object") {
-    return false;
-  }
+  /*
+    Class 10 currently uses General.
 
-  return (
-    "explanation" in object ||
-    "example" in object ||
-    "points" in object ||
-    "formulas" in object ||
-    "questions" in object
-  );
-}
+    Later we can make this depend on the curriculum.
+  */
 
+  if (state.className === "10") {
 
-/* =========================================================
-   TOPIC DATA
-   ========================================================= */
+    selectLevel("stream", "General");
 
-function getTopicData() {
-
-  const current = getCurrentObject();
-
-  if (!current || typeof current !== "object") {
-    return {};
-  }
-
-  return current;
-}
-
-
-/* =========================================================
-   TAB SWITCHING
-   ========================================================= */
-
-function setTab(tab) {
-
-  state.tab = tab;
-
-  renderTopic();
-}
-
-
-/* =========================================================
-   QUIZ
-   ========================================================= */
-
-function answerQuiz(answerIndex, correctIndex) {
-
-  if (state.quizAnswered) {
     return;
+
   }
 
-  state.quizAnswered = true;
 
-  if (answerIndex === correctIndex) {
-    state.quizScore += 1;
-    showToast("Correct! 🎉");
-  } else {
-    showToast("Not quite. Check the explanation.");
-  }
+  app.innerHTML = `
 
-  renderTopic();
+    ${backButton()}
+
+    ${pageHeader(
+      "CHOOSE YOUR STREAM",
+      "Select the stream you are studying."
+    )}
+
+    <section class="content-section">
+
+      <div class="card-grid">
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('stream','Science')"
+        >
+
+          <span class="choice-title">
+            Science
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('stream','Commerce')"
+        >
+
+          <span class="choice-title">
+            Commerce
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+
+        <button
+          class="choice-card"
+          onclick="selectLevel('stream','Arts')"
+        >
+
+          <span class="choice-title">
+            Arts
+          </span>
+
+          <span class="choice-arrow">
+            →
+          </span>
+
+        </button>
+
+      </div>
+
+    </section>
+
+  `;
+
 }
 
 
 /* =========================================================
-   AI PLACEHOLDER
+   SUBJECT
    ========================================================= */
 
-function askAI() {
+function renderSubject() {
 
-  showToast(
-    "AI Tutor will be available soon."
-  );
+  const availableSubjects = [];
+
+  const board = state.board;
+  const className = state.className;
+
+
+  if (
+    DATA_FILES[board] &&
+    DATA_FILES[board][className]
+  ) {
+
+    Object.keys(DATA_FILES[board][className])
+      .forEach(subject => {
+
+        availableSubjects.push(subject);
+
+      });
+
+  }
+
+
+  if (availableSubjects.length === 0) {
+
+    app.innerHTML = `
+
+      ${backButton()}
+
+      ${pageHeader(
+        "SUBJECTS",
+        "More subjects are being prepared."
+      )}
+
+      <section class="content-section">
+
+        <div class="empty-state">
+
+          <h2>Coming soon</h2>
+
+          <p>
+            This curriculum and class will be added soon.
+          </p>
+
+        </div>
+
+      </section>
+
+    `;
+
+    return;
+
+  }
+
+
+  app.innerHTML = `
+
+    ${backButton()}
+
+    ${pageHeader(
+      "CHOOSE A SUBJECT",
+      `${state.board} • Class ${state.className}`
+    )}
+
+    <section class="content-section">
+
+      ${cards(availableSubjects, "subject")}
+
+    </section>
+
+  `;
+
 }
 
 
 /* =========================================================
-   TOPIC PAGE
+   BOOK
+   ========================================================= */
+
+function renderBook() {
+
+  const data = getCurrentData();
+
+  if (!data || !data.books) {
+
+    app.innerHTML = `
+
+      ${backButton()}
+
+      ${pageHeader(
+        "BOOKS",
+        "No book data available."
+      )}
+
+    `;
+
+    return;
+
+  }
+
+
+  const books = Object.keys(data.books);
+
+
+  app.innerHTML = `
+
+    ${backButton()}
+
+    ${pageHeader(
+      data.title || state.subject,
+      "Choose your book."
+    )}
+
+    <section class="content-section">
+
+      ${cards(books, "book")}
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   CHAPTER
+   ========================================================= */
+
+function renderChapter() {
+
+  const book = getCurrentBook();
+
+  if (!book) {
+
+    app.innerHTML = `
+
+      ${backButton()}
+
+      ${pageHeader(
+        "CHAPTERS",
+        "No chapter data available."
+      )}
+
+    `;
+
+    return;
+
+  }
+
+
+  const chapters = Object.keys(book.chapters || {});
+
+
+  app.innerHTML = `
+
+    ${backButton()}
+
+    ${pageHeader(
+      state.book,
+      "Choose a chapter."
+    )}
+
+    <section class="content-section">
+
+      ${cards(chapters, "chapter")}
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   TOPIC
    ========================================================= */
 
 function renderTopic() {
 
-  const data = getTopicData();
-
-  const questions =
-    Array.isArray(data.questions)
-      ? data.questions
-      : [];
-
-  const points =
-    Array.isArray(data.points)
-      ? data.points
-      : [];
-
-  const formulas =
-    Array.isArray(data.formulas)
-      ? data.formulas
-      : [];
+  const topic = getCurrentTopic();
 
 
-  let content = "";
+  if (!topic) {
+
+    app.innerHTML = `
+
+      ${backButton()}
+
+      ${pageHeader(
+        "TOPIC",
+        "Topic data is not available yet."
+      )}
+
+    `;
+
+    return;
+
+  }
 
 
-  /* -------------------------------------------------------
-     LEARN
-     ------------------------------------------------------- */
+  const tab = state.tab || "learn";
 
-  if (state.tab === "learn") {
 
-    content = `
-      <div class="content-card">
+  app.innerHTML = `
 
-        <div class="content-label">
-          LEARN
-        </div>
+    ${backButton()}
+
+
+    <section class="topic-header">
+
+      <p class="eyebrow">
+
+        ${escapeHTML(state.book)}
+
+      </p>
+
+      <h1>
+        ${escapeHTML(state.topic)}
+      </h1>
+
+      <p>
+        ${escapeHTML(topic.subtitle || "")}
+      </p>
+
+    </section>
+
+
+    <nav class="topic-tabs">
+
+      <button
+        class="${tab === "learn" ? "active" : ""}"
+        onclick="changeTab('learn')"
+      >
+        LEARN
+      </button>
+
+      <button
+        class="${tab === "practice" ? "active" : ""}"
+        onclick="changeTab('practice')"
+      >
+        PRACTICE
+      </button>
+
+      <button
+        class="${tab === "quiz" ? "active" : ""}"
+        onclick="changeTab('quiz')"
+      >
+        QUIZ
+      </button>
+
+      <button
+        class="${tab === "keypoints" ? "active" : ""}"
+        onclick="changeTab('keypoints')"
+      >
+        KEY POINTS
+      </button>
+
+      <button
+        class="${tab === "ai" ? "active" : ""}"
+        onclick="changeTab('ai')"
+      >
+        ASK AI
+      </button>
+
+    </nav>
+
+
+    <section class="topic-content">
+
+      ${renderTopicTab(topic, tab)}
+
+    </section>
+
+  `;
+
+}
+
+
+/* =========================================================
+   CHANGE TAB
+   ========================================================= */
+
+function changeTab(tab) {
+
+  state.tab = tab;
+
+  render();
+
+}
+
+
+/* =========================================================
+   TOPIC TAB CONTENT
+   ========================================================= */
+
+function renderTopicTab(topic, tab) {
+
+
+  /* ---------------- LEARN ---------------- */
+
+  if (tab === "learn") {
+
+    return `
+
+      <article class="lesson">
 
         <h2>
-          ${escapeHTML(state.topic)}
+          Introduction
         </h2>
 
         <p>
-          ${escapeHTML(
-            data.explanation ||
-            "StudyCore explanation coming soon."
-          )}
+          ${escapeHTML(topic.introduction || "Content coming soon.")}
         </p>
 
-        ${
-          data.example
-            ? `
-              <div class="example-box">
-
-                <strong>
-                  Example
-                </strong>
-
-                <p>
-                  ${escapeHTML(data.example)}
-                </p>
-
-              </div>
-            `
-            : ""
-        }
 
         ${
-          points.length
-            ? `
-              <div class="points-box">
+          topic.summary
+          ? `
 
-                <h3>
-                  Important Points
-                </h3>
+            <h2>
+              Summary
+            </h2>
 
-                <ul>
+            <p>
+              ${escapeHTML(topic.summary)}
+            </p>
 
-                  ${points
-                    .map(point => `
-                      <li>
-                        ${escapeHTML(point)}
-                      </li>
-                    `)
-                    .join("")}
-
-                </ul>
-
-              </div>
-            `
-            : ""
+          `
+          : ""
         }
 
-      </div>
+
+        ${
+          topic.characters
+          ? `
+
+            <h2>
+              Characters
+            </h2>
+
+            <div class="info-list">
+
+              ${topic.characters.map(character => `
+
+                <div class="info-item">
+
+                  <strong>
+                    ${escapeHTML(character.name)}
+                  </strong>
+
+                  <p>
+                    ${escapeHTML(character.description)}
+                  </p>
+
+                </div>
+
+              `).join("")}
+
+            </div>
+
+          `
+          : ""
+        }
+
+
+        ${
+          topic.themes
+          ? `
+
+            <h2>
+              Major Themes
+            </h2>
+
+            <ul>
+
+              ${topic.themes.map(theme => `
+
+                <li>
+                  ${escapeHTML(theme)}
+                </li>
+
+              `).join("")}
+
+            </ul>
+
+          `
+          : ""
+        }
+
+
+        ${
+          topic.vocabulary
+          ? `
+
+            <h2>
+              Vocabulary
+            </h2>
+
+            <div class="vocabulary-grid">
+
+              ${topic.vocabulary.map(word => `
+
+                <div class="formula-card">
+
+                  <strong>
+                    ${escapeHTML(word.word)}
+                  </strong>
+
+                  <span>
+                    ${escapeHTML(word.meaning)}
+                  </span>
+
+                </div>
+
+              `).join("")}
+
+            </div>
+
+          `
+          : ""
+        }
+
+      </article>
+
     `;
+
   }
 
 
-  /* -------------------------------------------------------
-     PRACTICE
-     ------------------------------------------------------- */
+  /* ---------------- PRACTICE ---------------- */
 
-  else if (state.tab === "practice") {
+  if (tab === "practice") {
 
-    content = `
-      <div class="content-card">
+    const questions = topic.practice || [];
 
-        <div class="content-label">
-          PRACTICE
+
+    if (questions.length === 0) {
+
+      return `
+
+        <div class="empty-state">
+
+          <h2>
+            Practice coming soon
+          </h2>
+
+          <p>
+            Original practice questions will appear here.
+          </p>
+
         </div>
 
-        <h2>
-          Practice Questions
-        </h2>
+      `;
 
-        ${
-          questions.length
-            ? questions
-                .map((question, index) => `
-                  <div class="question-card">
+    }
 
-                    <span class="question-number">
-                      ${index + 1}
-                    </span>
 
-                    <p>
-                      ${escapeHTML(
-                        typeof question === "string"
-                          ? question
-                          : question.question
-                      )}
-                    </p>
+    return `
 
-                  </div>
-                `)
-                .join("")
-            : `
-              <p>
-                Practice questions are being added.
-              </p>
-            `
-        }
+      <div class="question-list">
+
+        ${questions.map((question, index) => `
+
+          <article class="question-card">
+
+            <span class="question-number">
+              Question ${index + 1}
+            </span>
+
+            <h3>
+              ${escapeHTML(question.question)}
+            </h3>
+
+            ${
+              question.answer
+              ? `
+
+                <details>
+
+                  <summary>
+                    Show answer
+                  </summary>
+
+                  <p>
+                    ${escapeHTML(question.answer)}
+                  </p>
+
+                </details>
+
+              `
+              : ""
+            }
+
+          </article>
+
+        `).join("")}
 
       </div>
+
     `;
+
   }
 
 
-  /* -------------------------------------------------------
-     QUIZ
-     ------------------------------------------------------- */
+  /* ---------------- QUIZ ---------------- */
 
-  else if (state.tab === "quiz") {
+  if (tab === "quiz") {
 
-    if (!questions.length) {
+    const quiz = topic.quiz || [];
 
-      content = `
-        <div class="content-card">
 
-          <div class="content-label">
-            QUIZ
-          </div>
+    if (quiz.length === 0) {
+
+      return `
+
+        <div class="empty-state">
 
           <h2>
             Quiz coming soon
           </h2>
 
           <p>
-            Questions will be added here.
+            Interactive quizzes will appear here.
           </p>
 
         </div>
+
       `;
 
-    } else {
-
-      const quizQuestions = questions.filter(
-        q =>
-          typeof q === "object" &&
-          Array.isArray(q.options)
-      );
+    }
 
 
-      if (!quizQuestions.length) {
+    return `
 
-        content = `
-          <div class="content-card">
+      <div class="quiz-box">
 
-            <div class="content-label">
-              QUIZ
-            </div>
+        <h2>
+          Quick Quiz
+        </h2>
 
-            <h2>
-              Quiz coming soon
-            </h2>
+        ${quiz.map((question, index) => `
 
-            <p>
-              Interactive multiple-choice questions
-              will be added here.
-            </p>
+          <div class="quiz-question">
 
-          </div>
-        `;
-
-      } else {
-
-        const quiz = quizQuestions[0];
-
-        const correctIndex =
-          Number.isInteger(quiz.answer)
-            ? quiz.answer
-            : 0;
-
-        content = `
-          <div class="content-card">
-
-            <div class="content-label">
-              QUIZ
-            </div>
-
-            <div class="quiz-score">
-              Score: ${state.quizScore}
-            </div>
-
-            <h2>
-              ${escapeHTML(quiz.question)}
-            </h2>
+            <h3>
+              ${index + 1}. ${escapeHTML(question.question)}
+            </h3>
 
             <div class="quiz-options">
 
-              ${quiz.options
-                .map((option, index) => `
-                  <button
-                    class="quiz-option"
-                    onclick="answerQuiz(
-                      ${index},
-                      ${correctIndex}
-                    )"
-                  >
-                    ${escapeHTML(option)}
-                  </button>
-                `)
-                .join("")}
+              ${question.options.map(option => `
+
+                <button
+                  onclick="answerQuiz(
+                    ${index},
+                    '${String(option).replace(/'/g, "\\'")}',
+                    '${String(question.answer).replace(/'/g, "\\'")}'
+                  )"
+                >
+
+                  ${escapeHTML(option)}
+
+                </button>
+
+              `).join("")}
 
             </div>
 
-            ${
-              state.quizAnswered
-                ? `
-                  <div class="quiz-result">
-
-                    ${
-                      state.quizScore > 0
-                        ? "Correct! 🎉"
-                        : "Review the concept and try again."
-                    }
-
-                  </div>
-                `
-                : ""
-            }
-
           </div>
-        `;
-      }
-    }
+
+        `).join("")}
+
+
+        <div class="quiz-score">
+
+          Score:
+          <strong>${state.quizScore}</strong>
+
+        </div>
+
+      </div>
+
+    `;
+
   }
 
 
-  /* -------------------------------------------------------
-     FORMULAS
-     ------------------------------------------------------- */
+  /* ---------------- KEY POINTS ---------------- */
 
-  else if (state.tab === "formulas") {
+  if (tab === "keypoints") {
 
-    content = `
-      <div class="content-card">
+    const points = topic.keyPoints || [];
 
-        <div class="content-label">
-          KEY POINTS
-        </div>
+
+    return `
+
+      <article class="lesson">
 
         <h2>
-          Formulas & Key Concepts
+          Key Points
         </h2>
 
         ${
-          formulas.length
-            ? `
-              <div class="formula-list">
+          points.length
+          ? `
 
-                ${formulas
-                  .map(formula => `
-                    <div class="formula-card">
-                      ${escapeHTML(formula)}
-                    </div>
-                  `)
-                  .join("")}
+            <ul>
 
-              </div>
-            `
-            : `
-              <p>
-                Formula and key-point notes are being added.
-              </p>
-            `
+              ${points.map(point => `
+
+                <li>
+                  ${escapeHTML(point)}
+                </li>
+
+              `).join("")}
+
+            </ul>
+
+          `
+          : `
+
+            <p>
+              Key points are being prepared.
+            </p>
+
+          `
         }
 
-      </div>
+      </article>
+
     `;
+
   }
 
 
-  /* -------------------------------------------------------
-     AI
-     ------------------------------------------------------- */
+  /* ---------------- AI ---------------- */
 
-  else if (state.tab === "ai") {
+  if (tab === "ai") {
 
-    content = `
+    return `
+
       <div class="ai-box">
 
-        <div class="content-label">
-          ASK AI
+        <div class="ai-icon">
+          AI
         </div>
 
         <h2>
@@ -919,323 +1516,60 @@ function renderTopic() {
         </h2>
 
         <p>
-          Ask questions, get step-by-step explanations,
-          understand formulas and learn difficult concepts.
+          Ask a question about this topic and get a
+          step-by-step explanation.
         </p>
 
         <div class="ai-limit">
-          3 questions per day
+
+          <strong>
+            3
+          </strong>
+
+          AI questions available today
+
         </div>
+
 
         <button
           class="primary-button"
-          onclick="askAI()"
+          onclick="showToast('AI Tutor connection is coming next.')"
         >
-          ASK THE AI →
+
+          ASK A QUESTION
+
         </button>
 
-        <small>
-          AI Tutor is being connected to the StudyCore
-          learning system.
-        </small>
-
       </div>
+
     `;
+
   }
 
 
-  app.innerHTML = `
+  return "";
 
-    <section class="topic-page">
-
-      ${pageHeader(
-        state.topic,
-        "Learn the concept, practise it and test yourself."
-      )}
-
-      <div class="breadcrumb">
-        ${createPath()}
-      </div>
-
-      ${backButton()}
-
-      <div class="topic-tabs">
-
-        <button
-          class="${state.tab === "learn" ? "active" : ""}"
-          onclick="setTab('learn')"
-        >
-          LEARN
-        </button>
-
-        <button
-          class="${state.tab === "practice" ? "active" : ""}"
-          onclick="setTab('practice')"
-        >
-          PRACTICE
-        </button>
-
-        <button
-          class="${state.tab === "quiz" ? "active" : ""}"
-          onclick="setTab('quiz')"
-        >
-          QUIZ
-        </button>
-
-        <button
-          class="${state.tab === "formulas" ? "active" : ""}"
-          onclick="setTab('formulas')"
-        >
-          KEY POINTS
-        </button>
-
-        <button
-          class="${state.tab === "ai" ? "active" : ""}"
-          onclick="setTab('ai')"
-        >
-          ASK AI
-        </button>
-
-      </div>
-
-      ${content}
-
-    </section>
-
-  `;
 }
 
 
 /* =========================================================
-   MAIN RENDER ENGINE
+   QUIZ ANSWER
    ========================================================= */
 
-function render() {
+function answerQuiz(index, selected, correct) {
 
-  const data = getData();
+  if (selected === correct) {
 
-  /* -------------------------------------------------------
-     STEP 0 — CLASS
-     ------------------------------------------------------- */
+    state.quizScore++;
 
-  if (state.step === 0) {
+    showToast("Correct!");
 
-    const classes = getKeys(data);
+  } else {
 
-    app.innerHTML = `
+    showToast("Not quite. Try the next one.");
 
-      ${pageHeader(
-        "What are you studying?",
-        "Start with your class. Everything here is designed to be simple, practical and free."
-      )}
-
-      <section class="options-section">
-
-        <div class="section-label">
-          CHOOSE YOUR CLASS
-        </div>
-
-        <div class="option-grid">
-
-          ${
-            classes.length
-              ? classes
-                  .map((item, index) =>
-                    createOptionCard(
-                      item,
-                      index,
-                      "class"
-                    )
-                  )
-                  .join("")
-              : `
-                <p>
-                  Curriculum is being prepared.
-                </p>
-              `
-          }
-
-        </div>
-
-      </section>
-    `;
-
-    return;
   }
 
-
-  /* -------------------------------------------------------
-     STEP 1 — BOARD / CURRICULUM
-     ------------------------------------------------------- */
-
-  if (state.step === 1) {
-
-    const current =
-      data[state.className] || {};
-
-    const boards = getKeys(current);
-
-    app.innerHTML =
-      renderChooser(
-        "Choose your board",
-        "Pick the curriculum you follow.",
-        boards,
-        "board"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 2 — STREAM
-     ------------------------------------------------------- */
-
-  if (state.step === 2) {
-
-    const streams = getStreams();
-
-    /*
-      If there is only one stream such as "General",
-      we still show it because it keeps the data structure
-      consistent and lets the user choose it.
-    */
-
-    app.innerHTML =
-      renderChooser(
-        "Choose your stream",
-        "Choose the stream that matches your studies.",
-        streams,
-        "stream"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 3 — SUBJECT
-     ------------------------------------------------------- */
-
-  if (state.step === 3) {
-
-    const current = getCurrentObject();
-
-    const subjects = getKeys(current);
-
-    app.innerHTML =
-      renderChooser(
-        "Choose a subject",
-        "Choose a subject to continue.",
-        subjects,
-        "subject"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 4 — BOOK
-     ------------------------------------------------------- */
-
-  if (state.step === 4) {
-
-    const current = getCurrentObject();
-
-    const books = getKeys(current);
-
-    /*
-      If a subject directly contains topics rather than books,
-      allow the system to continue without forcing a book.
-    */
-
-    const hasDirectTopic =
-      books.some(book =>
-        looksLikeTopicData(current[book])
-      );
-
-    if (hasDirectTopic) {
-
-      /*
-        Treat the current subject as the topic container.
-        We skip the book screen.
-      */
-
-      state.step = 5;
-
-      render();
-
-      return;
-    }
-
-
-    app.innerHTML =
-      renderChooser(
-        "Choose your book",
-        "Pick the book you want to study.",
-        books,
-        "book"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 5 — CHAPTER
-     ------------------------------------------------------- */
-
-  if (state.step === 5) {
-
-    const current = getCurrentObject();
-
-    const chapters = getKeys(current);
-
-    app.innerHTML =
-      renderChooser(
-        "Choose a chapter",
-        "Choose a chapter to continue.",
-        chapters,
-        "chapter"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 6 — TOPIC
-     ------------------------------------------------------- */
-
-  if (state.step === 6) {
-
-    const current = getCurrentObject();
-
-    const topics = getKeys(current);
-
-    app.innerHTML =
-      renderChooser(
-        "Choose a topic",
-        "Choose a topic to start studying.",
-        topics,
-        "topic"
-      );
-
-    return;
-  }
-
-
-  /* -------------------------------------------------------
-     STEP 7 — TOPIC CONTENT
-     ------------------------------------------------------- */
-
-  if (state.step === 7) {
-
-    renderTopic();
-
-    return;
-  }
 }
 
 
