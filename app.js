@@ -1,45 +1,6 @@
 /* =========================================================
-   STUDYCORE
-   Main Application
+   STUDYCORE — MAIN APPLICATION
    ========================================================= */
-
-const app = document.getElementById("app");
-
-
-/* =========================================================
-   APPLICATION STATE
-   ========================================================= */
-
-const state = {
-  step: "class",
-
-  className: null,
-  board: null,
-  stream: null,
-  subject: null,
-  book: null,
-  chapter: null,
-  topic: null,
-
-  tab: "learn",
-
-  quizScore: 0,
-
-  loadedData: null
-};
-
-
-/* =========================================================
-   DATA FILE MAP
-   =========================================================
-
-   We will add more files here later.
-
-   The important part:
-   StudyCore does NOT need one giant content.js anymore.
-
-   Each subject/book can have its own file.
-*/
 
 const DATA_FILES = {
 
@@ -47,39 +8,65 @@ const DATA_FILES = {
 
     "10": {
 
-      English: "data/ncert/class10/english/footprints.js"
+      English: {
+        "Footprints Without Feet":
+          "data/ncert/class10/english/footprints.js",
+
+        "First Flight":
+          "data/ncert/class10/english/first-flight.js",
+
+        Grammar:
+          "data/ncert/class10/english/grammar.js"
+      }
 
     }
 
   },
 
-  WBBSE: {
+  WBBSE: {},
 
-    "10": {
-
-    }
-
-  },
-
-  WBCHSE: {
-
-    "11": {
-
-    },
-
-    "12": {
-
-    }
-
-  }
+  WBCHSE: {}
 
 };
 
 
 /* =========================================================
-   ESCAPE HTML
+   APP STATE
    ========================================================= */
 
+const state = {
+
+  step: "class",
+
+  className: null,
+
+  board: null,
+
+  stream: null,
+
+  subject: null,
+
+  book: null,
+
+  chapter: null,
+
+  topic: null,
+
+  tab: "learn"
+
+};
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+const app = document.getElementById("app");
+
+let loadedData = null;
+
+
+/* Escape HTML safely */
 function escapeHTML(value) {
 
   if (value === undefined || value === null) {
@@ -92,13 +79,11 @@ function escapeHTML(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
 }
 
 
-/* =========================================================
-   TOAST
-   ========================================================= */
-
+/* Toast */
 function showToast(message) {
 
   const toast = document.getElementById("toast");
@@ -112,6 +97,7 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove("show");
   }, 2500);
+
 }
 
 
@@ -130,14 +116,12 @@ function goHome() {
   state.book = null;
   state.chapter = null;
   state.topic = null;
-
   state.tab = "learn";
 
-  state.quizScore = 0;
-
-  state.loadedData = null;
+  loadedData = null;
 
   render();
+
 }
 
 
@@ -147,241 +131,282 @@ function goHome() {
 
 function showAccount() {
 
-  showToast("Account system is coming next.");
+  alert(
+    "StudyCore accounts will be connected here later.\n\n" +
+    "AI Tutor will require an account."
+  );
 
 }
 
 
 /* =========================================================
-   BACK
+   RESET
    ========================================================= */
+
+function resetFrom(level) {
+
+  if (level === "class") {
+
+    state.className = null;
+    state.board = null;
+    state.stream = null;
+    state.subject = null;
+    state.book = null;
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+  if (level === "board") {
+
+    state.board = null;
+    state.stream = null;
+    state.subject = null;
+    state.book = null;
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+  if (level === "stream") {
+
+    state.stream = null;
+    state.subject = null;
+    state.book = null;
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+  if (level === "subject") {
+
+    state.subject = null;
+    state.book = null;
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+  if (level === "book") {
+
+    state.book = null;
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+  if (level === "chapter") {
+
+    state.chapter = null;
+    state.topic = null;
+
+  }
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function chooseClass(value) {
+
+  resetFrom("class");
+
+  state.className = value;
+
+  state.step = "board";
+
+  render();
+
+}
+
+
+function chooseBoard(value) {
+
+  resetFrom("board");
+
+  state.board = value;
+
+  if (state.className === "10") {
+
+    state.stream = "General";
+
+    state.step = "subject";
+
+  } else {
+
+    state.step = "stream";
+
+  }
+
+  render();
+
+}
+
+
+function chooseStream(value) {
+
+  resetFrom("stream");
+
+  state.stream = value;
+
+  state.step = "subject";
+
+  render();
+
+}
+
+
+function chooseSubject(value) {
+
+  resetFrom("subject");
+
+  state.subject = value;
+
+  state.step = "book";
+
+  render();
+
+}
+
+
+async function chooseBook(value) {
+
+  resetFrom("book");
+
+  state.book = value;
+
+  state.step = "chapter";
+
+  await loadSubjectData();
+
+  render();
+
+}
+
+
+function chooseChapter(value) {
+
+  state.chapter = value;
+
+  state.topic = null;
+
+  state.step = "topic";
+
+  render();
+
+}
+
+
+function chooseTopic(value) {
+
+  state.topic = value;
+
+  state.tab = "learn";
+
+  render();
+
+}
+
 
 function goBack() {
 
-  if (state.step === "topic") {
+  if (state.step === "board") {
 
-    state.step = "chapter";
-    state.topic = null;
-    state.tab = "learn";
-
-  }
-
-  else if (state.step === "chapter") {
-
-    state.step = "book";
-    state.chapter = null;
-
-  }
-
-  else if (state.step === "book") {
-
-    state.step = "subject";
-    state.book = null;
-
-  }
-
-  else if (state.step === "subject") {
-
-    state.step = "stream";
-    state.subject = null;
-    state.loadedData = null;
+    state.step = "class";
 
   }
 
   else if (state.step === "stream") {
 
     state.step = "board";
-    state.stream = null;
 
   }
 
-  else if (state.step === "board") {
+  else if (state.step === "subject") {
 
-    state.step = "class";
-    state.board = null;
-
-  }
-
-  render();
-}
-
-
-/* =========================================================
-   SELECT LEVEL
-   ========================================================= */
-
-function selectLevel(type, value) {
-
-  if (type === "class") {
-
-    state.className = value;
-    state.step = "board";
+    state.step = state.className === "10"
+      ? "board"
+      : "stream";
 
   }
 
-  else if (type === "board") {
+  else if (state.step === "book") {
 
-    state.board = value;
-
-    /*
-      Class 10 currently doesn't need a stream selection
-      for the first version.
-
-      We will add stream handling when Commerce/Arts/Science
-      datasets are connected.
-    */
-
-    if (state.className === "10") {
-
-      state.stream = "General";
-      state.step = "stream";
-
-    } else {
-
-      state.step = "stream";
-
-    }
-
-  }
-
-  else if (type === "stream") {
-
-    state.stream = value;
     state.step = "subject";
 
   }
 
-  else if (type === "subject") {
+  else if (state.step === "chapter") {
 
-    state.subject = value;
-
-    loadSubjectData()
-      .then(() => {
-
-        state.step = "book";
-
-        render();
-
-      })
-      .catch(() => {
-
-        showToast("This subject is not available yet.");
-
-      });
-
-    return;
+    state.step = "book";
 
   }
 
-  else if (type === "book") {
+  else if (state.step === "topic") {
 
-    state.book = value;
     state.step = "chapter";
 
   }
 
-  else if (type === "chapter") {
-
-    state.chapter = value;
-    state.step = "topic";
-
-  }
-
-  else if (type === "topic") {
-
-    state.topic = value;
-    state.tab = "learn";
-
-    state.quizScore = 0;
-
-    state.step = "topic";
-
-  }
-
   render();
+
 }
 
 
 /* =========================================================
-   LOAD SUBJECT DATA
+   LOAD DATA FILE
    ========================================================= */
 
-function loadSubjectData() {
+function loadScript(src) {
 
   return new Promise((resolve, reject) => {
 
-    /*
-      Already loaded?
-    */
+    const oldScript =
+      document.querySelector(
+        'script[data-study-data="true"]'
+      );
 
-    if (state.loadedData) {
-
-      resolve(state.loadedData);
-
-      return;
-
+    if (oldScript) {
+      oldScript.remove();
     }
-
-
-    const board = state.board;
-    const className = state.className;
-    const subject = state.subject;
-
-
-    if (
-      !DATA_FILES[board] ||
-      !DATA_FILES[board][className] ||
-      !DATA_FILES[board][className][subject]
-    ) {
-
-      reject(new Error("Data file not found"));
-
-      return;
-
-    }
-
-
-    const file = DATA_FILES[board][className][subject];
-
-
-    /*
-      Remove old StudyCore data object if one exists.
-    */
 
     window.STUDY_DATA = null;
 
-
-    /*
-      Create script dynamically.
-    */
-
     const script = document.createElement("script");
 
-    script.src = file + "?v=" + Date.now();
+    script.src = src;
+
+    script.dataset.studyData = "true";
 
     script.onload = () => {
 
-      if (!window.STUDY_DATA) {
+      if (window.STUDY_DATA) {
 
-        reject(new Error("Study data missing"));
+        resolve(window.STUDY_DATA);
 
-        return;
+      } else {
+
+        reject(
+          new Error(
+            "STUDY_DATA was not created by " + src
+          )
+        );
 
       }
 
-      state.loadedData = window.STUDY_DATA;
-
-      resolve(window.STUDY_DATA);
-
     };
-
 
     script.onerror = () => {
 
-      reject(new Error("Could not load " + file));
+      reject(
+        new Error(
+          "Could not load " + src
+        )
+      );
 
     };
-
 
     document.body.appendChild(script);
 
@@ -390,206 +415,265 @@ function loadSubjectData() {
 }
 
 
-/* =========================================================
-   GET CURRENT DATA
-   ========================================================= */
+async function loadSubjectData() {
 
-function getCurrentData() {
+  loadedData = null;
 
-  return state.loadedData || window.STUDY_DATA || null;
+  const classData =
+    DATA_FILES[state.board]?.[state.className];
+
+  if (!classData) {
+
+    console.warn(
+      "No data mapping found:",
+      state.board,
+      state.className
+    );
+
+    return;
+
+  }
+
+
+  const subjectData =
+    classData[state.subject];
+
+  if (!subjectData) {
+
+    console.warn(
+      "No subject mapping found:",
+      state.subject
+    );
+
+    return;
+
+  }
+
+
+  const filePath =
+    subjectData[state.book];
+
+  if (!filePath) {
+
+    console.warn(
+      "No book mapping found:",
+      state.book
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    loadedData =
+      await loadScript(filePath);
+
+    console.log(
+      "Study data loaded successfully:",
+      filePath
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "StudyCore data loading error:",
+      error
+    );
+
+    loadedData = null;
+
+  }
 
 }
 
 
 /* =========================================================
-   GET CURRENT BOOK
+   DATA ACCESS
    ========================================================= */
 
-function getCurrentBook() {
+function getBooks() {
 
-  const data = getCurrentData();
+  if (!loadedData?.books) {
+    return [];
+  }
 
-  if (!data || !data.books) return null;
-
-  return data.books[state.book] || null;
+  return Object.keys(loadedData.books);
 
 }
 
 
-/* =========================================================
-   GET CURRENT CHAPTER
-   ========================================================= */
+function getChapters() {
 
-function getCurrentChapter() {
+  if (!loadedData?.books?.[state.book]?.chapters) {
+    return [];
+  }
 
-  const book = getCurrentBook();
-
-  if (!book || !book.chapters) return null;
-
-  return book.chapters[state.chapter] || null;
+  return Object.keys(
+    loadedData.books[state.book].chapters
+  );
 
 }
 
 
-/* =========================================================
-   GET CURRENT TOPIC
-   ========================================================= */
+function getTopics() {
+
+  const chapter =
+    loadedData
+      ?.books
+      ?.[state.book]
+      ?.chapters
+      ?.[state.chapter];
+
+  if (!chapter?.topics) {
+    return [];
+  }
+
+  return Object.keys(chapter.topics);
+
+}
+
 
 function getCurrentTopic() {
 
-  const chapter = getCurrentChapter();
-
-  if (!chapter || !chapter.topics) return null;
-
-  return chapter.topics[state.topic] || null;
-
-}
-
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function render() {
-
-  if (!app) return;
-
-
-  if (state.step === "class") {
-
-    renderClass();
-
-    return;
-
-  }
-
-
-  if (state.step === "board") {
-
-    renderBoard();
-
-    return;
-
-  }
-
-
-  if (state.step === "stream") {
-
-    renderStream();
-
-    return;
-
-  }
-
-
-  if (state.step === "subject") {
-
-    renderSubject();
-
-    return;
-
-  }
-
-
-  if (state.step === "book") {
-
-    renderBook();
-
-    return;
-
-  }
-
-
-  if (state.step === "chapter") {
-
-    renderChapter();
-
-    return;
-
-  }
-
-
-  if (state.step === "topic") {
-
-    renderTopic();
-
-    return;
-
-  }
+  return loadedData
+    ?.books
+    ?.[state.book]
+    ?.chapters
+    ?.[state.chapter]
+    ?.topics
+    ?.[state.topic];
 
 }
 
 
 /* =========================================================
-   PAGE WRAPPER
+   GENERIC CARD
    ========================================================= */
 
-function pageHeader(title, subtitle) {
+function choiceCard(
+  title,
+  subtitle,
+  onclick
+) {
 
   return `
+    <button
+      class="choice-card"
+      onclick="${onclick}"
+    >
 
-    <section class="hero">
+      <strong>
+        ${escapeHTML(title)}
+      </strong>
 
-      <p class="eyebrow">STUDYCORE</p>
-
-      <h1>${escapeHTML(title)}</h1>
-
-      <p>${escapeHTML(subtitle)}</p>
-
-    </section>
-
-  `;
-
-}
-
-
-/* =========================================================
-   BACK BUTTON
-   ========================================================= */
-
-function backButton() {
-
-  return `
-
-    <button class="back-button" onclick="goBack()">
-
-      ← Back
+      ${
+        subtitle
+          ? `<span>${escapeHTML(subtitle)}</span>`
+          : ""
+      }
 
     </button>
-
   `;
 
 }
 
 
 /* =========================================================
-   CARD GRID
+   BREADCRUMBS
    ========================================================= */
 
-function cards(items, type) {
+function breadcrumbs() {
+
+  const items = ["Home"];
+
+  if (state.className) {
+    items.push(`Class ${state.className}`);
+  }
+
+  if (state.board) {
+    items.push(state.board);
+  }
+
+  if (state.stream) {
+    items.push(state.stream);
+  }
+
+  if (state.subject) {
+    items.push(state.subject);
+  }
+
+  if (state.book) {
+    items.push(state.book);
+  }
+
+  if (state.chapter) {
+    items.push(state.chapter);
+  }
+
+  if (state.topic) {
+    items.push(state.topic);
+  }
+
+  return `
+    <div class="breadcrumbs">
+
+      ${items
+        .map((item, index) => {
+
+          return `
+            <span>
+              ${escapeHTML(item)}
+            </span>
+
+            ${
+              index < items.length - 1
+                ? `<b>›</b>`
+                : ""
+            }
+          `;
+
+        })
+        .join("")}
+
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+function pageHeader(
+  eyebrow,
+  title,
+  description = ""
+) {
 
   return `
 
-    <div class="card-grid">
+    ${breadcrumbs()}
 
-      ${items.map(item => `
+    <div class="page-heading">
 
-        <button
-          class="choice-card"
-          onclick="selectLevel('${type}', '${String(item).replace(/'/g, "\\'")}')"
-        >
+      <div class="eyebrow">
+        ${escapeHTML(eyebrow)}
+      </div>
 
-          <span class="choice-title">
-            ${escapeHTML(item)}
-          </span>
+      <h1>
+        ${escapeHTML(title)}
+      </h1>
 
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-      `).join("")}
+      ${
+        description
+          ? `<p>${escapeHTML(description)}</p>`
+          : ""
+      }
 
     </div>
 
@@ -599,80 +683,54 @@ function cards(items, type) {
 
 
 /* =========================================================
-   CLASS
+   CLASS PAGE
    ========================================================= */
 
-function renderClass() {
+function renderClassPage() {
 
   app.innerHTML = `
 
-    ${pageHeader(
-      "WHAT ARE YOU STUDYING?",
-      "Choose your class to begin."
-    )}
+    <section class="hero">
 
-    <section class="content-section">
+      <div class="eyebrow">
+        STUDYCORE
+      </div>
 
-      <div class="card-grid">
+      <h1>
+        WHAT ARE YOU STUDYING?
+      </h1>
 
-        <button
-          class="choice-card"
-          onclick="selectLevel('class','10')"
-        >
+      <p>
+        Choose your class to enter your learning space.
+      </p>
 
-          <span class="choice-title">
-            Class 10
-          </span>
+    </section>
 
-          <span class="choice-description">
-            Secondary school
-          </span>
+    <section class="selection-section">
 
-          <span class="choice-arrow">
-            →
-          </span>
+      <div class="section-label">
+        SELECT CLASS
+      </div>
 
-        </button>
+      <div class="choice-grid">
 
+        ${choiceCard(
+          "Class 10",
+          "Secondary level",
+          "chooseClass('10')"
+        )}
 
-        <button
-          class="choice-card"
-          onclick="selectLevel('class','11')"
-        >
+        ${choiceCard(
+          "Class 11",
+          "Higher secondary — first year",
+          "chooseClass('11')"
+        )}
 
-          <span class="choice-title">
-            Class 11
-          </span>
-
-          <span class="choice-description">
-            Higher secondary
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        <button
-          class="choice-card"
-          onclick="selectLevel('class','12')"
-        >
-
-          <span class="choice-title">
-            Class 12
-          </span>
-
-          <span class="choice-description">
-            Higher secondary
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
+        ${choiceCard(
+          "Class 12",
+          "Higher secondary — final year",
+          "chooseClass('12')"
+        )}
 
       </div>
 
@@ -684,84 +742,45 @@ function renderClass() {
 
 
 /* =========================================================
-   BOARD
+   BOARD PAGE
    ========================================================= */
 
-function renderBoard() {
+function renderBoardPage() {
 
   app.innerHTML = `
 
-    ${backButton()}
-
     ${pageHeader(
+      "STEP 02",
       "CHOOSE YOUR CURRICULUM",
-      "Select the curriculum you are studying."
+      `You're studying Class ${state.className}.`
     )}
 
-    <section class="content-section">
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
 
-      <div class="card-grid">
+    <section class="choice-grid">
 
-        <button
-          class="choice-card"
-          onclick="selectLevel('board','NCERT')"
-        >
+      ${choiceCard(
+        "NCERT",
+        "National curriculum",
+        "chooseBoard('NCERT')"
+      )}
 
-          <span class="choice-title">
-            NCERT
-          </span>
+      ${choiceCard(
+        "WBBSE",
+        "West Bengal Board of Secondary Education",
+        "chooseBoard('WBBSE')"
+      )}
 
-          <span class="choice-description">
-            National curriculum resources
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        <button
-          class="choice-card"
-          onclick="selectLevel('board','WBBSE')"
-        >
-
-          <span class="choice-title">
-            WBBSE
-          </span>
-
-          <span class="choice-description">
-            West Bengal Board
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        <button
-          class="choice-card"
-          onclick="selectLevel('board','WBCHSE')"
-        >
-
-          <span class="choice-title">
-            WBCHSE
-          </span>
-
-          <span class="choice-description">
-            West Bengal Higher Secondary
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-      </div>
+      ${choiceCard(
+        "WBCHSE",
+        "West Bengal Council of Higher Secondary Education",
+        "chooseBoard('WBCHSE')"
+      )}
 
     </section>
 
@@ -771,87 +790,45 @@ function renderBoard() {
 
 
 /* =========================================================
-   STREAM
+   STREAM PAGE
    ========================================================= */
 
-function renderStream() {
-
-  /*
-    Class 10 currently uses General.
-
-    Later we can make this depend on the curriculum.
-  */
-
-  if (state.className === "10") {
-
-    selectLevel("stream", "General");
-
-    return;
-
-  }
-
+function renderStreamPage() {
 
   app.innerHTML = `
 
-    ${backButton()}
-
     ${pageHeader(
+      "STEP 03",
       "CHOOSE YOUR STREAM",
       "Select the stream you are studying."
     )}
 
-    <section class="content-section">
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
 
-      <div class="card-grid">
+    <section class="choice-grid">
 
-        <button
-          class="choice-card"
-          onclick="selectLevel('stream','Science')"
-        >
+      ${choiceCard(
+        "Science",
+        "Physics, Chemistry, Mathematics and more",
+        "chooseStream('Science')"
+      )}
 
-          <span class="choice-title">
-            Science
-          </span>
+      ${choiceCard(
+        "Commerce",
+        "Accounts, Economics, Business and more",
+        "chooseStream('Commerce')"
+      )}
 
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        <button
-          class="choice-card"
-          onclick="selectLevel('stream','Commerce')"
-        >
-
-          <span class="choice-title">
-            Commerce
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-
-        <button
-          class="choice-card"
-          onclick="selectLevel('stream','Arts')"
-        >
-
-          <span class="choice-title">
-            Arts
-          </span>
-
-          <span class="choice-arrow">
-            →
-          </span>
-
-        </button>
-
-      </div>
+      ${choiceCard(
+        "Arts",
+        "Humanities and social sciences",
+        "chooseStream('Arts')"
+      )}
 
     </section>
 
@@ -861,201 +838,271 @@ function renderStream() {
 
 
 /* =========================================================
-   SUBJECT
+   SUBJECT PAGE
    ========================================================= */
 
-function renderSubject() {
+function renderSubjectPage() {
 
-  const availableSubjects = [];
+  const subjects =
+    DATA_FILES[state.board]?.[state.className]
+      ? Object.keys(
+          DATA_FILES[state.board][state.className]
+        )
+      : [];
 
-  const board = state.board;
-  const className = state.className;
+  app.innerHTML = `
+
+    ${pageHeader(
+      "STEP 04",
+      "CHOOSE A SUBJECT",
+      `${state.board} · Class ${state.className}`
+    )}
+
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
+
+    ${
+      subjects.length
+        ? `
+          <section class="choice-grid">
+
+            ${subjects
+              .map(subject =>
+                choiceCard(
+                  subject,
+                  "Open subject",
+                  `chooseSubject('${escapeJS(subject)}')`
+                )
+              )
+              .join("")}
+
+          </section>
+        `
+        : `
+          <div class="empty-state">
+
+            <h3>
+              Content is being prepared.
+            </h3>
+
+            <p>
+              This curriculum will be added to StudyCore.
+            </p>
+
+          </div>
+        `
+    }
+
+  `;
+
+}
 
 
-  if (
-    DATA_FILES[board] &&
-    DATA_FILES[board][className]
-  ) {
+/* =========================================================
+   BOOK PAGE
+   ========================================================= */
 
-    Object.keys(DATA_FILES[board][className])
-      .forEach(subject => {
+function renderBookPage() {
 
-        availableSubjects.push(subject);
+  const books = getBooks();
 
-      });
+  app.innerHTML = `
 
-  }
+    ${pageHeader(
+      "STEP 05",
+      state.subject,
+      "Choose the book or learning resource."
+    )}
+
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
+
+    ${
+      books.length
+        ? `
+          <section class="choice-grid">
+
+            ${books
+              .map(book =>
+                choiceCard(
+                  book,
+                  "Open book",
+                  `chooseBook('${escapeJS(book)}')`
+                )
+              )
+              .join("")}
+
+          </section>
+        `
+        : `
+          <div class="empty-state">
+
+            <h3>
+              Book data is not available yet.
+            </h3>
+
+            <p>
+              More StudyCore content will be added here.
+            </p>
+
+          </div>
+        `
+    }
+
+  `;
+
+}
 
 
-  if (availableSubjects.length === 0) {
+/* =========================================================
+   CHAPTER PAGE
+   ========================================================= */
 
-    app.innerHTML = `
+function renderChapterPage() {
 
-      ${backButton()}
+  const chapters = getChapters();
 
-      ${pageHeader(
-        "SUBJECTS",
-        "More subjects are being prepared."
-      )}
+  app.innerHTML = `
 
-      <section class="content-section">
+    ${pageHeader(
+      "CHAPTERS",
+      state.book,
+      "Choose a chapter to start studying."
+    )}
+
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
+
+    ${
+      chapters.length
+        ? `
+          <section class="choice-grid">
+
+            ${chapters
+              .map((chapter, index) => {
+
+                return choiceCard(
+                  `${index + 1}. ${chapter}`,
+                  "Open chapter",
+                  `chooseChapter('${escapeJS(chapter)}')`
+                );
+
+              })
+              .join("")}
+
+          </section>
+        `
+        : `
+          <div class="empty-state">
+
+            <h3>
+              Chapter data is not available yet.
+            </h3>
+
+            <p>
+              Check that the selected data file contains chapter information.
+            </p>
+
+          </div>
+        `
+    }
+
+  `;
+
+}
+
+
+/* =========================================================
+   TOPIC PAGE
+   ========================================================= */
+
+function renderTopicPage() {
+
+  const topics = getTopics();
+
+  if (!state.topic) {
+
+    if (!topics.length) {
+
+      app.innerHTML = `
+
+        ${pageHeader(
+          "TOPIC",
+          state.chapter || "Topic",
+          "Topic data is not available yet."
+        )}
+
+        <button
+          class="back-button"
+          onclick="goBack()"
+        >
+          ← BACK
+        </button>
 
         <div class="empty-state">
 
-          <h2>Coming soon</h2>
+          <h3>
+            Topic data is not available yet.
+          </h3>
 
           <p>
-            This curriculum and class will be added soon.
+            This chapter does not contain any topics.
           </p>
 
         </div>
 
-      </section>
+      `;
 
-    `;
+      return;
 
-    return;
-
-  }
+    }
 
 
-  app.innerHTML = `
-
-    ${backButton()}
-
-    ${pageHeader(
-      "CHOOSE A SUBJECT",
-      `${state.board} • Class ${state.className}`
-    )}
-
-    <section class="content-section">
-
-      ${cards(availableSubjects, "subject")}
-
-    </section>
-
-  `;
-
-}
-
-
-/* =========================================================
-   BOOK
-   ========================================================= */
-
-function renderBook() {
-
-  const data = getCurrentData();
-
-  if (!data || !data.books) {
-
-    app.innerHTML = `
-
-      ${backButton()}
-
-      ${pageHeader(
-        "BOOKS",
-        "No book data available."
-      )}
-
-    `;
-
-    return;
+    state.topic = topics[0];
 
   }
 
 
-  const books = Object.keys(data.books);
-
-
-  app.innerHTML = `
-
-    ${backButton()}
-
-    ${pageHeader(
-      data.title || state.subject,
-      "Choose your book."
-    )}
-
-    <section class="content-section">
-
-      ${cards(books, "book")}
-
-    </section>
-
-  `;
-
-}
-
-
-/* =========================================================
-   CHAPTER
-   ========================================================= */
-
-function renderChapter() {
-
-  const book = getCurrentBook();
-
-  if (!book) {
-
-    app.innerHTML = `
-
-      ${backButton()}
-
-      ${pageHeader(
-        "CHAPTERS",
-        "No chapter data available."
-      )}
-
-    `;
-
-    return;
-
-  }
-
-
-  const chapters = Object.keys(book.chapters || {});
-
-
-  app.innerHTML = `
-
-    ${backButton()}
-
-    ${pageHeader(
-      state.book,
-      "Choose a chapter."
-    )}
-
-    <section class="content-section">
-
-      ${cards(chapters, "chapter")}
-
-    </section>
-
-  `;
-
-}
-
-
-/* =========================================================
-   TOPIC
-   ========================================================= */
-
-function renderTopic() {
-
-  const topic = getCurrentTopic();
+  const topic =
+    getCurrentTopic();
 
 
   if (!topic) {
 
     app.innerHTML = `
 
-      ${backButton()}
-
       ${pageHeader(
         "TOPIC",
-        "Topic data is not available yet."
+        state.topic || "Topic",
+        "We couldn't find this topic in the loaded data."
       )}
+
+      <button
+        class="back-button"
+        onclick="goBack()"
+      >
+        ← BACK
+      </button>
+
+      <div class="empty-state">
+
+        <h3>
+          Topic data is not available yet.
+        </h3>
+
+      </div>
 
     `;
 
@@ -1064,76 +1111,98 @@ function renderTopic() {
   }
 
 
-  const tab = state.tab || "learn";
+  renderTopicContent(topic);
+
+}
+
+
+/* =========================================================
+   TOPIC CONTENT
+   ========================================================= */
+
+function renderTopicContent(topic) {
+
+  const topics =
+    getTopics();
 
 
   app.innerHTML = `
 
-    ${backButton()}
+    ${pageHeader(
+      "TOPIC",
+      state.topic,
+      topic.subtitle || ""
+    )}
+
+    <button
+      class="back-button"
+      onclick="goBack()"
+    >
+      ← BACK
+    </button>
 
 
-    <section class="topic-header">
+    ${
+      topics.length > 1
+        ? `
+          <div class="topic-selector">
 
-      <p class="eyebrow">
+            ${topics
+              .map(item => `
 
-        ${escapeHTML(state.book)}
+                <button
+                  class="${
+                    item === state.topic
+                      ? "active"
+                      : ""
+                  }"
+                  onclick="chooseTopic('${escapeJS(item)}')"
+                >
+                  ${escapeHTML(item)}
+                </button>
 
-      </p>
+              `)
+              .join("")}
 
-      <h1>
-        ${escapeHTML(state.topic)}
-      </h1>
-
-      <p>
-        ${escapeHTML(topic.subtitle || "")}
-      </p>
-
-    </section>
+          </div>
+        `
+        : ""
+    }
 
 
-    <nav class="topic-tabs">
+    <div class="topic-tabs">
 
-      <button
-        class="${tab === "learn" ? "active" : ""}"
-        onclick="changeTab('learn')"
-      >
-        LEARN
-      </button>
+      ${tabButton(
+        "learn",
+        "LEARN"
+      )}
 
-      <button
-        class="${tab === "practice" ? "active" : ""}"
-        onclick="changeTab('practice')"
-      >
-        PRACTICE
-      </button>
+      ${tabButton(
+        "practice",
+        "PRACTICE"
+      )}
 
-      <button
-        class="${tab === "quiz" ? "active" : ""}"
-        onclick="changeTab('quiz')"
-      >
-        QUIZ
-      </button>
+      ${tabButton(
+        "quiz",
+        "QUIZ"
+      )}
 
-      <button
-        class="${tab === "keypoints" ? "active" : ""}"
-        onclick="changeTab('keypoints')"
-      >
-        KEY POINTS
-      </button>
+      ${tabButton(
+        "keypoints",
+        "KEY POINTS"
+      )}
 
-      <button
-        class="${tab === "ai" ? "active" : ""}"
-        onclick="changeTab('ai')"
-      >
-        ASK AI
-      </button>
+      ${tabButton(
+        "ai",
+        "ASK AI"
+      )}
 
-    </nav>
+    </div>
 
 
     <section class="topic-content">
 
-      ${renderTopicTab(topic, tab)}
+      ${renderActiveTab(topic)}
 
     </section>
 
@@ -1143,10 +1212,33 @@ function renderTopic() {
 
 
 /* =========================================================
-   CHANGE TAB
+   TAB BUTTON
    ========================================================= */
 
-function changeTab(tab) {
+function tabButton(
+  id,
+  label
+) {
+
+  return `
+
+    <button
+      class="${
+        state.tab === id
+          ? "active"
+          : ""
+      }"
+      onclick="setTab('${id}')"
+    >
+      ${label}
+    </button>
+
+  `;
+
+}
+
+
+function setTab(tab) {
 
   state.tab = tab;
 
@@ -1156,210 +1248,267 @@ function changeTab(tab) {
 
 
 /* =========================================================
-   TOPIC TAB CONTENT
+   ACTIVE TAB
    ========================================================= */
 
-function renderTopicTab(topic, tab) {
+function renderActiveTab(topic) {
+
+  if (state.tab === "learn") {
+
+    return renderLearn(topic);
+
+  }
+
+  if (state.tab === "practice") {
+
+    return renderPractice(topic);
+
+  }
+
+  if (state.tab === "quiz") {
+
+    return renderQuiz(topic);
+
+  }
+
+  if (state.tab === "keypoints") {
+
+    return renderKeyPoints(topic);
+
+  }
+
+  if (state.tab === "ai") {
+
+    return renderAI();
+
+  }
+
+  return "";
+
+}
 
 
-  /* ---------------- LEARN ---------------- */
+/* =========================================================
+   LEARN
+   ========================================================= */
 
-  if (tab === "learn") {
+function renderLearn(topic) {
 
-    return `
+  return `
 
-      <article class="lesson">
+    <article class="content-card">
 
-        <h2>
-          Introduction
-        </h2>
+      <div class="content-label">
+        INTRODUCTION
+      </div>
 
-        <p>
-          ${escapeHTML(topic.introduction || "Content coming soon.")}
-        </p>
+      <h2>
+        Understand the chapter
+      </h2>
+
+      <p>
+        ${escapeHTML(topic.introduction || "")}
+      </p>
+
+    </article>
 
 
-        ${
-          topic.summary
-          ? `
+    ${
+      topic.summary
+        ? `
+          <article class="content-card">
+
+            <div class="content-label">
+              SUMMARY
+            </div>
 
             <h2>
-              Summary
+              What happens?
             </h2>
 
             <p>
               ${escapeHTML(topic.summary)}
             </p>
 
-          `
-          : ""
-        }
+          </article>
+        `
+        : ""
+    }
 
 
-        ${
-          topic.characters
-          ? `
+    ${
+      topic.storyUnderstanding?.length
+        ? `
+
+          <article class="content-card">
+
+            <div class="content-label">
+              UNDERSTAND DEEPLY
+            </div>
 
             <h2>
-              Characters
+              Important ideas
             </h2>
 
             <div class="info-list">
 
-              ${topic.characters.map(character => `
+              ${topic.storyUnderstanding
+                .map(item => `
 
-                <div class="info-item">
+                  <div class="info-item">
 
-                  <strong>
-                    ${escapeHTML(character.name)}
-                  </strong>
+                    <h3>
+                      ${escapeHTML(item.heading)}
+                    </h3>
 
-                  <p>
-                    ${escapeHTML(character.description)}
-                  </p>
+                    <p>
+                      ${escapeHTML(item.text)}
+                    </p>
 
-                </div>
+                  </div>
 
-              `).join("")}
-
-            </div>
-
-          `
-          : ""
-        }
-
-
-        ${
-          topic.themes
-          ? `
-
-            <h2>
-              Major Themes
-            </h2>
-
-            <ul>
-
-              ${topic.themes.map(theme => `
-
-                <li>
-                  ${escapeHTML(theme)}
-                </li>
-
-              `).join("")}
-
-            </ul>
-
-          `
-          : ""
-        }
-
-
-        ${
-          topic.vocabulary
-          ? `
-
-            <h2>
-              Vocabulary
-            </h2>
-
-            <div class="vocabulary-grid">
-
-              ${topic.vocabulary.map(word => `
-
-                <div class="formula-card">
-
-                  <strong>
-                    ${escapeHTML(word.word)}
-                  </strong>
-
-                  <span>
-                    ${escapeHTML(word.meaning)}
-                  </span>
-
-                </div>
-
-              `).join("")}
+                `)
+                .join("")}
 
             </div>
-
-          `
-          : ""
-        }
-
-      </article>
-
-    `;
-
-  }
-
-
-  /* ---------------- PRACTICE ---------------- */
-
-  if (tab === "practice") {
-
-    const questions = topic.practice || [];
-
-
-    if (questions.length === 0) {
-
-      return `
-
-        <div class="empty-state">
-
-          <h2>
-            Practice coming soon
-          </h2>
-
-          <p>
-            Original practice questions will appear here.
-          </p>
-
-        </div>
-
-      `;
-
-    }
-
-
-    return `
-
-      <div class="question-list">
-
-        ${questions.map((question, index) => `
-
-          <article class="question-card">
-
-            <span class="question-number">
-              Question ${index + 1}
-            </span>
-
-            <h3>
-              ${escapeHTML(question.question)}
-            </h3>
-
-            ${
-              question.answer
-              ? `
-
-                <details>
-
-                  <summary>
-                    Show answer
-                  </summary>
-
-                  <p>
-                    ${escapeHTML(question.answer)}
-                  </p>
-
-                </details>
-
-              `
-              : ""
-            }
 
           </article>
 
-        `).join("")}
+        `
+        : ""
+    }
+
+
+    ${
+      topic.characters?.length
+        ? `
+
+          <article class="content-card">
+
+            <div class="content-label">
+              CHARACTERS
+            </div>
+
+            <div class="info-list">
+
+              ${topic.characters
+                .map(character => `
+
+                  <div class="info-item">
+
+                    <h3>
+                      ${escapeHTML(character.name)}
+                    </h3>
+
+                    <p>
+                      ${escapeHTML(character.description)}
+                    </p>
+
+                  </div>
+
+                `)
+                .join("")}
+
+            </div>
+
+          </article>
+
+        `
+        : ""
+    }
+
+
+    ${
+      topic.themes?.length
+        ? `
+
+          <article class="content-card">
+
+            <div class="content-label">
+              THEMES
+            </div>
+
+            <ul class="clean-list">
+
+              ${topic.themes
+                .map(theme => `
+                  <li>
+                    ${escapeHTML(theme)}
+                  </li>
+                `)
+                .join("")}
+
+            </ul>
+
+          </article>
+
+        `
+        : ""
+    }
+
+
+    ${
+      topic.vocabulary?.length
+        ? `
+
+          <article class="content-card">
+
+            <div class="content-label">
+              VOCABULARY
+            </div>
+
+            <div class="vocabulary-grid">
+
+              ${topic.vocabulary
+                .map(item => `
+
+                  <div class="vocabulary-item">
+
+                    <strong>
+                      ${escapeHTML(item.word)}
+                    </strong>
+
+                    <span>
+                      ${escapeHTML(item.meaning)}
+                    </span>
+
+                  </div>
+
+                `)
+                .join("")}
+
+            </div>
+
+          </article>
+
+        `
+        : ""
+    }
+
+  `;
+
+}
+
+
+/* =========================================================
+   PRACTICE
+   ========================================================= */
+
+function renderPractice(topic) {
+
+  if (!topic.practice?.length) {
+
+    return `
+
+      <div class="empty-state">
+
+        <h3>
+          Practice is coming soon.
+        </h3>
+
+        <p>
+          Practice questions will appear here.
+        </p>
 
       </div>
 
@@ -1368,176 +1517,401 @@ function renderTopicTab(topic, tab) {
   }
 
 
-  /* ---------------- QUIZ ---------------- */
+  return `
 
-  if (tab === "quiz") {
+    <div class="practice-list">
 
-    const quiz = topic.quiz || [];
+      ${topic.practice
+        .map((item, index) => `
+
+          <article class="question-card">
+
+            <div class="question-number">
+              QUESTION ${index + 1}
+            </div>
+
+            <h3>
+              ${escapeHTML(item.question)}
+            </h3>
+
+            <details>
+
+              <summary>
+                SHOW ANSWER
+              </summary>
+
+              <p>
+                ${escapeHTML(item.answer)}
+              </p>
+
+            </details>
+
+          </article>
+
+        `)
+        .join("")}
+
+    </div>
+
+  `;
+
+}
 
 
-    if (quiz.length === 0) {
+/* =========================================================
+   QUIZ
+   ========================================================= */
 
-      return `
+function renderQuiz(topic) {
 
-        <div class="empty-state">
-
-          <h2>
-            Quiz coming soon
-          </h2>
-
-          <p>
-            Interactive quizzes will appear here.
-          </p>
-
-        </div>
-
-      `;
-
-    }
-
+  if (!topic.quiz?.length) {
 
     return `
 
-      <div class="quiz-box">
+      <div class="empty-state">
 
-        <h2>
-          Quick Quiz
-        </h2>
+        <h3>
+          Quiz is coming soon.
+        </h3>
 
-        ${quiz.map((question, index) => `
+      </div>
 
-          <div class="quiz-question">
+    `;
+
+  }
+
+
+  return `
+
+    <div class="quiz-list">
+
+      ${topic.quiz
+        .map((item, index) => `
+
+          <article class="quiz-card">
+
+            <div class="question-number">
+              QUESTION ${index + 1}
+            </div>
 
             <h3>
-              ${index + 1}. ${escapeHTML(question.question)}
+              ${escapeHTML(item.question)}
             </h3>
 
             <div class="quiz-options">
 
-              ${question.options.map(option => `
+              ${item.options
+                .map(option => `
 
-                <button
-                  onclick="answerQuiz(
-                    ${index},
-                    '${String(option).replace(/'/g, "\\'")}',
-                    '${String(question.answer).replace(/'/g, "\\'")}'
-                  )"
-                >
+                  <button
+                    onclick="checkQuizAnswer(
+                      this,
+                      '${escapeJS(option)}',
+                      '${escapeJS(item.answer)}'
+                    )"
+                  >
+                    ${escapeHTML(option)}
+                  </button>
 
-                  ${escapeHTML(option)}
-
-                </button>
-
-              `).join("")}
+                `)
+                .join("")}
 
             </div>
 
-          </div>
+            <div class="quiz-result"></div>
 
-        `).join("")}
+          </article>
+
+        `)
+        .join("")}
+
+    </div>
+
+  `;
+
+}
 
 
-        <div class="quiz-score">
+function checkQuizAnswer(
+  button,
+  selected,
+  correct
+) {
 
-          Score:
-          <strong>${state.quizScore}</strong>
+  const card =
+    button.closest(".quiz-card");
 
-        </div>
+  if (!card) return;
 
-      </div>
+  const result =
+    card.querySelector(".quiz-result");
 
-    `;
+  const buttons =
+    card.querySelectorAll(
+      ".quiz-options button"
+    );
+
+
+  buttons.forEach(item => {
+
+    item.disabled = true;
+
+  });
+
+
+  if (selected === correct) {
+
+    button.classList.add("correct");
+
+    result.textContent =
+      "✓ Correct";
+
+    result.classList.add("correct");
+
+  } else {
+
+    button.classList.add("wrong");
+
+    result.textContent =
+      "✕ Not quite. Try reviewing the chapter.";
+
+    result.classList.add("wrong");
 
   }
 
-
-  /* ---------------- KEY POINTS ---------------- */
-
-  if (tab === "keypoints") {
-
-    const points = topic.keyPoints || [];
+}
 
 
-    return `
+/* =========================================================
+   KEY POINTS
+   ========================================================= */
 
-      <article class="lesson">
+function renderKeyPoints(topic) {
 
-        <h2>
-          Key Points
-        </h2>
+  const points =
+    topic.keyPoints || [];
 
-        ${
-          points.length
-          ? `
+  const examPoints =
+    topic.examPoints || [];
 
-            <ul>
 
-              ${points.map(point => `
+  return `
 
-                <li>
-                  ${escapeHTML(point)}
-                </li>
+    ${
+      points.length
+        ? `
 
-              `).join("")}
+          <article class="content-card">
+
+            <div class="content-label">
+              REMEMBER
+            </div>
+
+            <h2>
+              Key points
+            </h2>
+
+            <ol class="clean-list numbered">
+
+              ${points
+                .map(point => `
+                  <li>
+                    ${escapeHTML(point)}
+                  </li>
+                `)
+                .join("")}
+
+            </ol>
+
+          </article>
+
+        `
+        : ""
+    }
+
+
+    ${
+      examPoints.length
+        ? `
+
+          <article class="content-card">
+
+            <div class="content-label">
+              EXAM FOCUS
+            </div>
+
+            <h2>
+              What to prepare
+            </h2>
+
+            <ul class="clean-list">
+
+              ${examPoints
+                .map(point => `
+                  <li>
+                    ${escapeHTML(point)}
+                  </li>
+                `)
+                .join("")}
 
             </ul>
 
-          `
-          : `
+          </article>
 
-            <p>
-              Key points are being prepared.
-            </p>
+        `
+        : ""
+    }
 
-          `
-        }
+  `;
 
-      </article>
+}
 
-    `;
+
+/* =========================================================
+   AI
+   ========================================================= */
+
+function renderAI() {
+
+  return `
+
+    <article class="ai-box">
+
+      <div class="content-label">
+        STUDYCORE AI
+      </div>
+
+      <h2>
+        ASK AI
+      </h2>
+
+      <p>
+        Ask questions about this topic and get a
+        step-by-step explanation.
+      </p>
+
+      <div class="ai-limit">
+
+        <strong>
+          3
+        </strong>
+
+        <span>
+          questions available today
+        </span>
+
+      </div>
+
+      <button
+        class="primary-button"
+        onclick="showToast('AI Tutor will be connected next.')"
+      >
+        ASK A QUESTION
+      </button>
+
+      <p class="small-note">
+        AI Tutor requires an account.
+      </p>
+
+    </article>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ESCAPE JAVASCRIPT STRINGS
+   ========================================================= */
+
+function escapeJS(value) {
+
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r");
+
+}
+
+
+/* =========================================================
+   MAIN RENDER
+   ========================================================= */
+
+function render() {
+
+  try {
+
+    if (state.step === "class") {
+
+      renderClassPage();
+
+    }
+
+    else if (state.step === "board") {
+
+      renderBoardPage();
+
+    }
+
+    else if (state.step === "stream") {
+
+      renderStreamPage();
+
+    }
+
+    else if (state.step === "subject") {
+
+      renderSubjectPage();
+
+    }
+
+    else if (state.step === "book") {
+
+      renderBookPage();
+
+    }
+
+    else if (state.step === "chapter") {
+
+      renderChapterPage();
+
+    }
+
+    else if (state.step === "topic") {
+
+      renderTopicPage();
+
+    }
 
   }
 
+  catch (error) {
 
-  /* ---------------- AI ---------------- */
+    console.error(
+      "StudyCore rendering error:",
+      error
+    );
 
-  if (tab === "ai") {
+    app.innerHTML = `
 
-    return `
-
-      <div class="ai-box">
-
-        <div class="ai-icon">
-          AI
-        </div>
+      <div class="error-state">
 
         <h2>
-          StudyCore AI Tutor
+          Something went wrong.
         </h2>
 
         <p>
-          Ask a question about this topic and get a
-          step-by-step explanation.
+          Please refresh the page and try again.
         </p>
-
-        <div class="ai-limit">
-
-          <strong>
-            3
-          </strong>
-
-          AI questions available today
-
-        </div>
-
 
         <button
           class="primary-button"
-          onclick="showToast('AI Tutor connection is coming next.')"
+          onclick="goHome()"
         >
-
-          ASK A QUESTION
-
+          RETURN HOME
         </button>
 
       </div>
@@ -1546,35 +1920,11 @@ function renderTopicTab(topic, tab) {
 
   }
 
-
-  return "";
-
 }
 
 
 /* =========================================================
-   QUIZ ANSWER
-   ========================================================= */
-
-function answerQuiz(index, selected, correct) {
-
-  if (selected === correct) {
-
-    state.quizScore++;
-
-    showToast("Correct!");
-
-  } else {
-
-    showToast("Not quite. Try the next one.");
-
-  }
-
-}
-
-
-/* =========================================================
-   START APPLICATION
+   START
    ========================================================= */
 
 render();
