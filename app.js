@@ -376,7 +376,7 @@ function loadScript(src) {
 
     const script = document.createElement("script");
 
-    script.src = src;
+    script.src = new URL(src, window.location.href).href;
 
     script.dataset.studyData = "true";
 
